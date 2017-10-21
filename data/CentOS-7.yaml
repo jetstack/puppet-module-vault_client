@@ -1,0 +1,3 @@
+---
+vault_client::unit_file_dir: '/etc/systemd/system'
+vault_client::curl_cmd: '/usr/bin/curl'

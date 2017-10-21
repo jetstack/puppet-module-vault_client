@@ -1,0 +1,5 @@
+VAULT_ADDR=<%= scope['vault_client::server_url'] %>
+<% if scope['vault_client::init_token_enabled'] -%>
+VAULT_INIT_ROLE=<%= scope['vault_client::init_role'] %>
+<%- end -%>
+VAULT_CAPATH=<%= scope['vault_client::ca_cert_path'] %>

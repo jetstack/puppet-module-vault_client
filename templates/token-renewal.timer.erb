@@ -1,0 +1,9 @@
+[Unit]
+Description=trigger vault token renewal service
+
+[Timer]
+OnUnitActiveSec=<%= scope['vault_client::timer_frequency'] %>
+Persistent=true
+
+[Install]
+WantedBy=timers.target

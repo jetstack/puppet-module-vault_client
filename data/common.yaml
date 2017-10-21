@@ -1,0 +1,25 @@
+---
+vault_client::app_name: 'vault-helper'
+vault_client::token_service_name: 'vault-token-renewal'
+vault_client::version: '0.8.8'
+vault_client::install_path: "/opt/%{lookup('vault_client::app_name')}"
+vault_client::bin_dir: "%{lookup('vault_client::install_path')}/bin"
+vault_client::config_dir: '/etc/vault'
+vault_client::download_url: "https://github.com/jetstack-experimental/%{lookup('vault_client::app_name')}/releases/download/%{lookup('vault_client::version')}/%{lookup('vault_client::app_name')}_%{lookup('vault_client::version')}_linux_amd64"
+vault_client::server_url: 'http://127.0.0.1:8200'
+vault_client::config_path: "%{lookup('vault_client::config_dir')}/config"
+vault_client::helper_path: "%{lookup('vault_client::config_dir')}/helper"
+vault_client::token_path: "%{lookup('vault_client::config_dir')}/token"
+vault_client::init_token_path: "%{lookup('vault_client::config_dir')}/init-token"
+vault_client::timer_frequency: 86400
+vault_client::init_dir: ~
+vault_client::init_token: ~
+vault_client::init_role: ~
+vault_client::token: ~
+vault_client::ca_cert_path: ~
+vault_client::certs: ~
+vault_client::secrets:
+  test1:
+    secret_path: '/test/secrets/secret'
+    field: 'key'
+    dest_path: '/tmp/test1'
