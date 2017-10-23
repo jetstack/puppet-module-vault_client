@@ -32,6 +32,6 @@
   ],
   "pdk-version": "1.2.0",
   "template-url": "file:///opt/puppetlabs/pdk/share/cache/pdk-module-template.git",
-  "template-ref": "heads/master-0-g3f7d5ce"
+  "template-ref": "heads/master-0-g3f7d5ce",
   "long_description" : "This module is part of [Tarmak](http://docs.tarmak.io) and should currently be considered alpha.\n\n[![Travis](https://img.shields.io/travis/jetstack/puppet-module-vault_client.svg)](https://travis-ci.org/jetstack/puppet-module-vault_client/)"
 }
