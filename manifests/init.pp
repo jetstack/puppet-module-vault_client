@@ -1,82 +1,64 @@
-# Class: vault_client
-# ===========================
+# vault_client
 #
-# Puppet module to install and manage a vault client install
+# A description of what this class does
 #
-# === Parameters
+# @summary A short summary of the purpose of this class
 #
-# [*version*]
-#   The package version to install
-#
-# [*token*]
-#   Static token for the vault client
-#   Either token or init_token needs to be specified
-#
-# [*init_token*]
-#   Initial token for the vault client to generate node unique token
-#   Either token or init_token needs to be specified
-#
-# [*init_policies*]
-#   TODO
-#
-# [*init_role*]
-#   TODO
+# @example
+#   include vault_client
 class vault_client (
-  $version = $::vault_client::params::version,
-  $bin_dir = $::vault_client::params::bin_dir,
-  $download_dir = $::vault_client::params::download_dir,
-  $dest_dir = $::vault_client::params::dest_dir,
-  $server_url = $::vault_client::params::server_url,
-  $systemd_dir = $::vault_client::params::systemd_dir,
-  $init_token = undef,
-  $init_role = undef,
-  $token = undef,
-  $ca_cert_path = undef,
-) inherits ::vault_client::params {
-
-  # verify inputs
-
-  ## only one of init_token or token needs to exist
-  if $init_token == undef and $token == undef {
-    fail('You must provide at least one of $init_token or $token.')
-  }
-  if $init_token != undef and $token != undef {
-    fail('You must provide either $init_token or $token.')
-  }
-
-  # paths
-  $path = defined('$::path') ? {
+  String            $app_name,
+  String            $token_service_name,
+  String            $version,
+  String            $download_url,
+  String            $curl_cmd,
+  String            $install_path,
+  String            $bin_dir,
+  String            $config_dir,
+  String            $server_url,
+  String            $unit_file_dir,
+  String            $ca_cert_path,
+  String            $config_path,
+  String            $helper_path,
+  String            $token_path,
+  String            $init_token_path,
+  Integer           $timer_frequency,
+  Optional[String]  $init_token,
+  Optional[String]  $token,
+  Optional[String]  $init_role,
+  Optional[Vault_client::Certs] $certs,
+  Optional[Vault_client::Secrets] $secrets,
+) {
+  $path = defined($::path) ? {
     default => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/bin',
     true    => $::path,
   }
 
-  ## build download URL
-  $download_url = regsubst(
-    $::vault_client::params::download_url,
-    '#VERSION#',
-    $version,
-    'G'
-  )
+  if !$init_token and !$token {
+    fail('You must provide either init_token or token')
+  }
 
-  # token path
-  $config_path = "${::vault_client::config_dir}/config"
+  if $init_token and $token {
+    fail('You must provide either init_token or token, not both')
+  }
 
-  # helper script path
-  $helper_path = "${::vault_client::config_dir}/helper"
+  if $init_token {
+    $init_token_enabled = true
+  } else {
+    $init_token_enabled = false
+  }
 
-  # token path
-  $token_path = "${::vault_client::config_dir}/token"
+  exec { "${module_name}-systemctl-daemon-reload":
+    command     => 'systemctl daemon-reload',
+    refreshonly => true,
+    path        => $path
+  }
 
-  # init_token path
-  $init_token_path = "${::vault_client::config_dir}/init-token"
+  contain vault_client::install
+  contain vault_client::config
+  contain vault_client::service
 
-  # token renewal service
-  $token_service_name = 'vault-token-renewal'
-
-  $_dest_dir = "${dest_dir}/${::vault_client::params::app_name}-${version}"
-
-  class { '::vault_client::install': }
-  -> class { '::vault_client::config': }
-  -> class { '::vault_client::service': }
-  -> Class['::vault_client']
+  Class['vault_client::install']
+  -> Class['vault_client::config']
+  ~> Class['vault_client::service']
 }
