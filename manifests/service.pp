@@ -7,7 +7,7 @@ class vault_client::service inherits vault_client {
     mode    => '0644',
     owner   => 'root',
     group   => 'root',
-    content => file("${module_name}/token-renewal.service"),
+    content => template("${module_name}/token-renewal.service.erb"),
     notify  => Exec["${module_name}-systemctl-daemon-reload"]
   }
   ~> exec { "${vault_client::token_service_name}-trigger":
