@@ -10,7 +10,6 @@ describe 'vault_client' do
         {
           init_token:   'test-token',
           init_role:    'test-master',
-          ca_cert_path: '/etc/vault/ca.pem',
         }
       end
 
@@ -21,11 +20,7 @@ describe 'vault_client' do
       it { is_expected.to contain_class('vault_client::service') }
 
       context 'with niether of init_token and token specified' do
-        let(:params) do
-          {
-            ca_cert_path: '/etc/vault/ca.pem',
-          }
-        end
+        let(:params) { {} }
 
         it { is_expected.to compile.and_raise_error(%r{You must provide either init_token or token}) }
       end
@@ -35,7 +30,6 @@ describe 'vault_client' do
           {
             init_token: 'test-token',
             token:      'test-token',
-            ca_cert_path: '/etc/vault/ca.pem',
           }
         end
 
@@ -49,7 +43,6 @@ describe 'vault_client' do
           let(:params) do
             {
               token:        'test-token',
-              ca_cert_path: '/etc/vault/ca.pem',
             }
           end
 
@@ -67,7 +60,6 @@ describe 'vault_client' do
             {
               init_token: 'init-token-all',
               init_role:  'test-master',
-              ca_cert_path: '/etc/vault/ca.pem',
             }
           end
 
@@ -80,7 +72,6 @@ describe 'vault_client' do
           let(:params) do
             {
               token: 'test-token',
-              ca_cert_path: '/etc/vault/ca.pem',
             }
           end
 
@@ -104,7 +95,6 @@ describe 'vault_client' do
                 },
               },
               token: 'test-token',
-              ca_cert_path: '/etc/vault/ca.pem',
             }
           end
 
@@ -144,43 +134,68 @@ describe 'vault_client' do
                 },
               },
               token: 'test-token',
-              ca_cert_path: '/etc/vault/ca.pem',
+            }
+          end
+
+          it { is_expected.not_to compile }
+        end
+        context 'with secrets' do
+          let(:params) do
+            {
+              secrets: {
+                test1: {
+                  secret_path: '/test/secrets/secret',
+                  field: 'key',
+                  dest_path: '/tmp/test1',
+                },
+                test2: {
+                  secret_path: '/test/secretes/secret2',
+                  field: 'key',
+                  dest_path: '/tmp/test2',
+                },
+              },
+              token: 'test-token',
+            }
+          end
+
+          it { is_expected.to contain_vault_client__secret_service('test1') }
+          it { is_expected.to contain_vault_client__secret_service('test2') }
+
+          describe 'vault_client::secret_service' do
+            it { is_expected.to contain_file('/etc/systemd/system/test1-secret.service') }
+            it { is_expected.to contain_service('test1-secret.service') }
+            it { is_expected.to contain_file('/etc/systemd/system/test2-secret.service') }
+            it { is_expected.to contain_service('test2-secret.service') }
+          end
+        end
+        context 'with secrets with invalid params' do
+          let(:params) do
+            {
+              secrets: {
+                test1: {
+                  secret_path: '/test/secrets/secret',
+                  field: 0,
+                  dest_path: '/tmp/test1',
+                },
+                test2: {
+                  secret_path: '/test/secretes/secret2',
+                  field: 'key',
+                  dest_path: '/tmp/test2',
+                },
+              },
+              token: 'test-token',
             }
           end
 
           it { is_expected.not_to compile }
         end
       end
-      context 'with secrets' do
-        let(':params') do
-          {
-            secrets: {
-              test1: {
-                secret_path: '/test/secrets/secret',
-                field: 'key',
-                dest_path: '/tmp/test1',
-              },
-              test2: {
-                secret_path: '/test/secrets/secret2',
-                field: 'key',
-                dest_path: '/tmp/test2',
-              },
-            },
-            token: 'test-token',
-            ca_cert_path: '/etc/vault/ca.pem',
-          }
-        end
 
-        it { is_expected.to contain_file('/etc/systemd/system/test1-secret.service') }
-        it { is_expected.to contain_service('test1-secret.service') }
-        it { is_expected.to contain_vault_client__secret_service('test1') }
-      end
       describe 'vault_client::service' do
         context 'when default params' do
           let(:params) do
             {
               token: 'test-token',
-              ca_cert_path: '/etc/vault/ca.pem',
             }
           end
 
