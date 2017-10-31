@@ -1,40 +1,31 @@
-class vault_client::service {
+# vault_client::service
+# Private Class
+class vault_client::service inherits vault_client {
 
-  $systemd_dir = '/etc/systemd/system'
-  $service_name = $::vault_client::token_service_name
-  $frequency = 86400
-
-  $path = defined('$::path') ? {
-    default => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/bin',
-    true    => $::path
-  }
-
-  exec { "${module_name}-systemctl-daemon-reload":
-    command     => 'systemctl daemon-reload',
-    refreshonly => true,
-    path        => $path,
-  }
-
-  file { "${systemd_dir}/${service_name}.service":
+  file { "${vault_client::unit_file_dir}/${vault_client::token_service_name}.service":
     ensure  => file,
-    content => template('vault_client/token-renewal.service.erb'),
-    notify  => Exec["${module_name}-systemctl-daemon-reload"],
+    mode    => '0644',
+    owner   => 'root',
+    group   => 'root',
+    content => template("${module_name}/token-renewal.service.erb"),
+    notify  => Exec["${module_name}-systemctl-daemon-reload"]
   }
-  ~> exec { "${service_name}-trigger":
-    command     => "systemctl start ${service_name}.service",
-    path        => $path,
+  ~> exec { "${vault_client::token_service_name}-trigger":
+    command     => "systemctl start ${vault_client::token_service_name}.service",
+    path        => $vault_client::path,
     refreshonly => true,
-    require     => Exec["${module_name}-systemctl-daemon-reload"],
+    require     => Exec["${module_name}-systemctl-daemon-reload"]
   }
 
-  file { "${systemd_dir}/${service_name}.timer":
+  file { "${vault_client::unit_file_dir}/${vault_client::token_service_name}.timer":
     ensure  => file,
-    content => template('vault_client/token-renewal.timer.erb'),
-    notify  => Exec["${module_name}-systemctl-daemon-reload"],
+    mode    => '0644',
+    owner   => 'root',
+    group   => 'root',
+    content => template("${module_name}/token-renewal.timer.erb")
   }
-  ~> service { "${service_name}.timer":
+  ~> service { "${vault_client::token_service_name}.timer":
     ensure => 'running',
-    enable => true,
+    enable => true
   }
-
 }

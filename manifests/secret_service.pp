@@ -1,3 +1,4 @@
+# TODO: document
 define vault_client::secret_service (
   String $secret_path,
   String $field,
@@ -11,18 +12,15 @@ define vault_client::secret_service (
 {
   $service_name = "${name}-secret"
 
-  file { "${::vault_client::systemd_dir}/${service_name}.service":
+  file { "${vault_client::unit_file_dir}/${service_name}.service":
     ensure  => file,
-    content => template('vault_client/secret.service.erb'),
-    notify  => Service["${service_name}.service"],
+    content => template("${module_name}/secret.service.erb"),
+    notify  => Exec["${module_name}-systemctl-daemon-reload"],
   }
-  ~> exec { "${service_name}-systemctl-daemon-reload":
-    command     => 'systemctl daemon-reload',
-    refreshonly => true,
-    path        => $::vault_client::path,
-  }
-  -> service { "${service_name}.service":
-    ensure => 'running',
-    enable => true,
+
+  service { "${service_name}.service":
+    ensure    => 'running',
+    enable    => true,
+    subscribe => File["${vault_client::unit_file_dir}/${service_name}.service"]
   }
 }

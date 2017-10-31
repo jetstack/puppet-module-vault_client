@@ -1,46 +1,49 @@
-# == Class vault_client::config
-#
-# This class is called from vault_client for service config.
-#
-class vault_client::config {
-  if $::vault_client::init_token != undef {
-    $init_token_enabled = true
-  } else {
-    $init_token_enabled = false
-  }
-  $server_url = $::vault_client::server_url
-  $init_role = $::vault_client::init_role
+# vault_client::config
+# Private Class
+class vault_client::config inherits vault_client {
 
-  if $::vault_client::ca_cert_path != undef {
-    $ca_cert_path = $::vault_client::ca_cert_path
-  }
-
-  file { $::vault_client::config_dir:
-    ensure => directory,
-    mode   => '0700',
-  }
-
-  ## if init token provided, get a unique token for node
-  if $::vault_client::init_token != undef {
-    file {$::vault_client::init_token_path:
-      ensure  => 'present',
-      replace => 'no',
-      content => $::vault_client::init_token,
+  if $vault_client::init_token {
+    file { $vault_client::init_token_path:
+      ensure  => present,
       mode    => '0600',
+      replace => false,
+      owner   => 'root',
+      group   => 'root',
+      content => $vault_client::init_token
     }
   }
 
-  ## if token provided, get a unique token for node
-  if $::vault_client::token != undef {
-    file {$::vault_client::token_path:
-      ensure  => 'present',
-      content => $::vault_client::token,
+  if $vault_client::token {
+    file  { $vault_client::token_path:
+      ensure  => present,
       mode    => '0600',
+      owner   => 'root',
+      group   => 'root',
+      content => $vault_client::token
     }
   }
 
-  file { $::vault_client::config_path:
+  file { $vault_client::config_path:
     ensure  => file,
-    content => template('vault_client/config.erb'),
+    mode    => '0644',
+    owner   => 'root',
+    group   => 'root',
+    content => template('vault_client/config.erb')
+  }
+
+  if $vault_client::certs {
+    $vault_client::certs.each | $cert, $params | {
+      vault_client::cert_service { $cert:
+        * => $params
+      }
+    }
+  }
+
+  if $vault_client::secrets {
+    $vault_client::secrets.each | $secret, $params | {
+      vault_client::secret_service { $secret:
+        * => $params
+      }
+    }
   }
 }

@@ -2,7 +2,7 @@
 Description=trigger vault token renewal service
 
 [Timer]
-OnUnitActiveSec=<%= @frequency %>
+OnUnitActiveSec=<%= scope['vault_client::timer_frequency'] %>
 Persistent=true
 
 [Install]

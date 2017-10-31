@@ -1,33 +1,37 @@
 require 'puppetlabs_spec_helper/rake_tasks'
-require 'puppet-lint/tasks/puppet-lint'
-require 'metadata-json-lint/rake_task'
-require 'puppet_readme_generator/tasks'
-require 'puppet_blacksmith/rake_tasks'
-require 'rubocop/rake_task'
-RuboCop::RakeTask.new
+require 'puppet-syntax/tasks/puppet-syntax'
+require 'puppet_blacksmith/rake_tasks' if Bundler.rubygems.find_name('puppet_blacksmith').any?
+# require 'beaker/tasks/quick_start'
 
-PuppetLint.configuration.send('disable_80chars')
-PuppetLint.configuration.relative = true
-PuppetLint.configuration.ignore_paths = ['spec/**/*.pp', 'pkg/**/*.pp']
+PuppetLint.configuration.fail_on_warnings = true
+PuppetLint.configuration.send('relative')
 
-desc 'Validate manifests, templates, and ruby files'
-task :validate do
-  Dir['manifests/**/*.pp'].each do |manifest|
-    sh "puppet parser validate --noop #{manifest}"
+task :gen_nodeset do
+  require 'beaker-hostgenerator'
+  require 'securerandom'
+  require 'fileutils'
+
+  agent_target = ENV['TEST_TARGET']
+  unless agent_target
+    STDERR.puts 'TEST_TARGET environment variable is not set'
+    STDERR.puts 'setting to default value of "redhat-64default."'
+    agent_target = 'redhat-64default'
   end
-  Dir['spec/**/*.rb', 'lib/**/*.rb'].each do |ruby_file|
-    sh "ruby -c #{ruby_file}" unless ruby_file =~ %r{spec/fixtures}
+
+  master_target = ENV['MASTER_TEST_TARGET']
+  unless master_target
+    STDERR.puts 'MASTER_TEST_TARGET environment variable is not set'
+    STDERR.puts 'setting to default value of "redhat7-64mdcl"'
+    master_target = 'redhat7-64mdcl'
   end
-  Dir['templates/**/*.erb'].each do |template|
-    sh "erb -P -x -T '-' #{template} | ruby -c"
+
+  targets = "#{master_target}-#{agent_target}"
+  cli = BeakerHostGenerator::CLI.new([targets])
+  nodeset_dir = 'tmp/nodesets'
+  nodeset = "#{modeset_dir}/#{targets}-#{SecureRandom.uuid}.yaml"
+  FileUtils.mkdir_p(nodeset_dir)
+  File.open(nodeset, 'w') do |fh|
+    fh.print(cli.execute)
   end
+  puts nodeset
 end
-
-desc 'Run metadata_lint, lint, validate, and spec tests.'
-task :test do
-  [:metadata_lint, :lint, :validate, :spec].each do |test|
-    Rake::Task[test].invoke
-  end
-end
-
-task :beaker => :spec_prep

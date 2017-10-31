@@ -5,8 +5,8 @@ After=network.target network-online.target
 
 [Service]
 Type=oneshot
-EnvironmentFile=/etc/vault/config
-ExecStart=/opt/bin/vault-helper renew-token --init-role=${VAULT_INIT_ROLE}
+EnvironmentFile=<%= scope['vault_client::config_path'] %>
+ExecStart=<%= scope['vault_client::bin_dir'] %>/<%= scope['vault_client::app_name'] %> renew-token --init-role=${VAULT_INIT_ROLE}
 
 [Install]
 WantedBy=multi-user.target
