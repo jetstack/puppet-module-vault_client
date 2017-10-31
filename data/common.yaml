@@ -18,8 +18,4 @@ vault_client::init_role: ~
 vault_client::token: ~
 vault_client::ca_cert_path: ~
 vault_client::certs: ~
-vault_client::secrets:
-  test1:
-    secret_path: '/test/secrets/secret'
-    field: 'key'
-    dest_path: '/tmp/test1'
+vault_client::secrets: ~
